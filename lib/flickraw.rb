@@ -39,6 +39,16 @@ module FlickRaw
   # Path of flickr upload
   UPLOAD_PATH='/services/upload/'.freeze
 
+  FEED_PHOTOS_PUBLIC='/services/feeds/photos_public.gne?'.freeze
+  FEED_PHOTOS_FRIENDS='/services/feeds/photos_friends.gne?'.freeze
+  FEED_PHOTOS_FAVES='/services/feeds/photos_faves.gne?'.freeze
+  FEED_GROUPS_DISCUSS='/services/feeds/groups_discuss.gne?'.freeze
+  FEED_GROUPS_POOL='/services/feeds/groups_pool.gne?'.freeze
+  FEED_FORUMS='/services/feeds/forums.gne?'.freeze
+  FEED_ACTIVITY='/services/feeds/activity.gne?'.freeze
+  FEED_PHOTOS_COMMENTS='/services/feeds/photos_comments.gne?'.freeze
+  FEED_NEWS='/services/feeds/news.gne?'.freeze
+
   @api_key = '7b124df89b638e545e3165293883ef62'
 
   module SimpleOStruct # :nodoc:
@@ -77,6 +87,7 @@ module FlickRaw
     def to_s; @_content || super end
   end
 
+  class BadFeed < StandardError; end
   class FailedResponse < StandardError
     attr_reader :code
     alias :msg :message
@@ -236,6 +247,38 @@ module FlickRaw
 
   methods = Flickr.new.call 'flickr.reflection.getMethods'
   methods.each { |method| Flickr.build_request method }
+
+  class Feeds; end
+  class << Feeds
+    FlickRaw.constants.each {|c|
+      next unless m = c[/^FEED_(.*)/, 1]
+      f = eval(c)
+      define_method(m.downcase) do |*args|
+        call(f, *args)
+      end
+    }
+
+    def call(feed, args={})
+      path = feed + build_args(args).collect { |a, v| "#{a}=#{v}" }.join('&')
+      http_response = Net::HTTP.start(FLICKR_HOST) { |http| http.get(path, 'User-Agent' => "Flickraw/#{VERSION}") }
+      parse_response(http_response)
+    end
+
+    private
+    def parse_response(response)
+      json = JSON.load(response.body)
+      Response.structify json
+    rescue JSON::ParserError
+      raise BadFeed.new(response.body)
+    end
+
+    def build_args(args)
+      full_args = {:format => 'json', :nojsoncallback => 1}
+      args.each {|k, v| full_args[k.to_sym] = CGI.escape(v.to_s) }
+      full_args
+    end
+  end
+
 end
 
 # Use this to access the flickr API easily. You can type directly the flickr requests as they are described on the flickr website.
@@ -244,4 +287,3 @@ end
 #  recent_photos = flickr.photos.getRecent
 #  puts recent_photos[0].title
 def flickr; $flickraw ||= FlickRaw::Flickr.new end
-
