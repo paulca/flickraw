@@ -166,6 +166,28 @@ instead of
 This way it it doesn't fetch available flickr methods each time it is loaded.
 The flickraw-cached gem is on rubyforge and should be up-to-date with regard to flickr api most of the time.
 
+
+== Typhoeus
+
+Typhoeus (http://github.com/pauldix/typhoeus) is a gem that uses libcurl for very fast concurrent downloading. You can queue multiple requests and then run them in parallel.
+
+To use Typhoeus with flickraw, pass a block to any of the supplied api methods. eg.
+    
+    flickr.photos.getInfo(:photo_id => '3839885268') do |info|
+      puts info
+    end
+
+    flickr.photos.getInfo(:photo_id => '3839885269') do |info|
+      puts info
+    end
+    
+    flickr.photos.getInfo(:photo_id => '3839885270') do |info|
+      puts info
+    end
+    flickr.hydra.run
+
+Hydra is Typhoeus's queuing system. When you call `flickr.hydra.run`, all three requests are made in parallel, through libcurl : much faster than Net::HTTP.
+
 = Notes
 If you want to use the api authenticated with several user at the same time, you must pass the authentication token explicitly each time.
 This is because it is keeping the authentication token internally.

@@ -158,7 +158,7 @@ module FlickRaw
       @hydra ||= Typhoeus::Hydra.new
     end
     
-    def process_response(http_response)
+    def process_response(req,http_response)
       json = JSON.load(http_response.body.empty? ? "{}" : http_response.body)
       raise FailedResponse.new(json['message'], json['code'], req) if json.delete('stat') == 'fail'
       type, json = json.to_a.first if json.size == 1 and json.all? {|k,v| v.is_a? Hash}
@@ -180,7 +180,7 @@ module FlickRaw
           :headers => {'User-Agent' => "Flickraw/#{VERSION}"},
           :params => build_args(args, req))
         request.on_complete do |http_response|
-          yield(process_response(http_response))
+          yield(process_response(req,http_response))
         end
         hydra.queue request
       else
@@ -189,7 +189,7 @@ module FlickRaw
           request.set_form_data(build_args(args, req))
           http.request(request)
         end
-        process_response(http_response, &block)
+        process_response(req,http_response, &block)
       end
     end
 
