@@ -167,7 +167,7 @@ This way it it doesn't fetch available flickr methods each time it is loaded.
 The flickraw-cached gem is on rubyforge and should be up-to-date with regard to flickr api most of the time.
 
 = Notes
-If you want to use the api authenticated with several user at the same time, you must pass the authentication token explicitely each time.
+If you want to use the api authenticated with several user at the same time, you must pass the authentication token explicitly each time.
 This is because it is keeping the authentication token internally.
 As an alternative, you can create new Flickr objects besides Kernel.flickr which is created for you. Use Flickr.new to this effect.
 
