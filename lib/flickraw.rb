@@ -24,6 +24,7 @@
 require 'net/http'
 require 'digest/md5'
 require 'json'
+require 'typhoeus'
 
 FlickRawOptions = {} if not Object.const_defined? :FlickRawOptions # :nodoc:
 if ENV['http_proxy'] and not FlickRawOptions['proxy_host']
@@ -152,26 +153,44 @@ module FlickRaw
       super self
       @token = token
     end
-
-    # This is the central method. It does the actual request to the flickr server.
-    #
-    # Raises FailedResponse if the response status is _failed_.
-    def call(req, args={})
-      @token = nil if req == "flickr.auth.getFrob"
-      http_response = open_flickr do |http|
-        request = Net::HTTP::Post.new(REST_PATH, 'User-Agent' => "Flickraw/#{VERSION}")
-        request.set_form_data(build_args(args, req))
-        http.request(request)
-      end
-
+    
+    def hydra
+      @hydra ||= Typhoeus::Hydra.new
+    end
+    
+    def process_response(http_response)
       json = JSON.load(http_response.body.empty? ? "{}" : http_response.body)
       raise FailedResponse.new(json['message'], json['code'], req) if json.delete('stat') == 'fail'
       type, json = json.to_a.first if json.size == 1 and json.all? {|k,v| v.is_a? Hash}
-
+    
       res = Response.build json, type
       @token = res.token if res.respond_to? :flickr_type and res.flickr_type == "auth"
       yield res if block_given?
       res
+    end
+
+    # This is the central method. It does the actual request to the flickr server.
+    #
+    # Raises FailedResponse if the response status is _failed_.
+    def call(req, args={}, &block)
+      @token = nil if req == "flickr.auth.getFrob"
+      if FlickRawOptions['async']
+        request = Typhoeus::Request.new("#{FLICKR_HOST}#{REST_PATH}",
+          :method => :post,
+          :headers => {'User-Agent' => "Flickraw/#{VERSION}"},
+          :params => build_args(args, req))
+        request.on_complete do |http_response|
+          yield(process_response(http_response))
+        end
+        hydra.queue request
+      else
+        http_response = open_flickr do |http|
+          request = Net::HTTP::Post.new(REST_PATH, 'User-Agent' => "Flickraw/#{VERSION}")
+          request.set_form_data(build_args(args, req))
+          http.request(request)
+        end
+        process_response(http_response, &block)
+      end
     end
 
     # Use this to upload the photo in _file_.
