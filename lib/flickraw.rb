@@ -24,9 +24,10 @@
 require 'net/http'
 require 'digest/md5'
 require 'json'
-require 'typhoeus'
 
 FlickRawOptions = {} if not Object.const_defined? :FlickRawOptions # :nodoc:
+require 'typhoeus' if FlickRawOptions['async']
+
 if ENV['http_proxy'] and not FlickRawOptions['proxy_host']
   proxy = URI.parse ENV['http_proxy']
   FlickRawOptions.update('proxy_host' => proxy.host, 'proxy_port' => proxy.port, 'proxy_user' => proxy.user, 'proxy_password' => proxy.password)
