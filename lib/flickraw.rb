@@ -160,7 +160,9 @@ module FlickRaw
     end
     
     def process_response(req,http_response)
-      json = JSON.load(http_response.body.empty? ? "{}" : http_response.body)
+      json_string = http_response.body.empty? ? "{}" : http_response.body
+      puts "Response: #{json_string}" if FlickRawOptions['verbose']
+      json = JSON.load(json_string)
       raise FailedResponse.new(json['message'], json['code'], req) if json.delete('stat') == 'fail'
       type, json = json.to_a.first if json.size == 1 and json.all? {|k,v| v.is_a? Hash}
     
@@ -175,6 +177,10 @@ module FlickRaw
     # Raises FailedResponse if the response status is _failed_.
     def call(req, args={}, &block)
       @token = nil if req == "flickr.auth.getFrob"
+      if FlickRawOptions['verbose']
+        puts "Calling #{FLICKR_HOST}#{REST_PATH}"
+        puts "Params: #{build_args(args, req).inspect}"
+      end
       if FlickRawOptions['async']
         request = Typhoeus::Request.new("#{FLICKR_HOST}#{REST_PATH}",
           :method => :post,

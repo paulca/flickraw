@@ -111,7 +111,10 @@ You can pass some options to modify flickraw behavior:
     "proxy_password" => "proxy_password",
 
     "timeout" => 5,                # Set the request timeout
-    "auth_token" => "SAVED_TOKEN"  # Set the initial token
+    "auth_token" => "SAVED_TOKEN",  # Set the initial token
+    
+    "async" => true                 # Turn on async / concurrent fetching
+    "verbose" => true               # print server response to STDOUT
   }
 
   require 'flickraw'
