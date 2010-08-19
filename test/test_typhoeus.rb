@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-FlickRawOptions = {
-  'async' => true
-}
+FlickRawOptions ||= {}
+FlickRawOptions['async'] = true
 
 require 'test/unit'
 require 'lib/flickraw'
@@ -14,7 +13,7 @@ class Basic < Test::Unit::TestCase
       assert_instance_of FlickRaw::ResponseList, list
       assert_equal(list.size, 10)
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def people(user)
@@ -39,7 +38,7 @@ class Basic < Test::Unit::TestCase
       assert_equal 1, list.size
       assert_equal "3829093290", list[0].id
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   # groups
@@ -48,14 +47,14 @@ class Basic < Test::Unit::TestCase
       assert_equal "51035612836@N01", info.id
       assert_equal "Flickr API", info.name
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def test_groups_search
     flickr.groups.search(:text => "Flickr API") do |list|
       assert list.any? {|g| g.nsid == "51035612836@N01"}
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   # panda
@@ -63,7 +62,7 @@ class Basic < Test::Unit::TestCase
     flickr.panda.getList do |pandas|
       assert_equal ["ling ling", "hsing hsing", "wang wang"], pandas.to_a
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def test_panda_getList
@@ -71,7 +70,7 @@ class Basic < Test::Unit::TestCase
       assert_equal "wang wang", pandas.panda
       assert_respond_to pandas[0], :title
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   # people
@@ -79,14 +78,14 @@ class Basic < Test::Unit::TestCase
     flickr.people.findByEmail(:find_email => "flickraw@yahoo.com") do |user|
       people user
     end
-    flickr.hydra.run
+    flickr.async.run
   end
     
   def test_people_findByUsername
     flickr.people.findByUsername :username => "ruby_flickraw" do |user|
       people user
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def test_people_getInfo
@@ -98,14 +97,14 @@ class Basic < Test::Unit::TestCase
       assert_equal "http://m.flickr.com/photostream.gne?id=41630239", user.mobileurl
       assert_equal 0, user.ispro
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def test_people_getPublicGroups
     flickr.people.getPublicGroups(:user_id => "41650587@N02") do |groups|
       assert groups.to_a.empty?
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def test_people_getPublicPhotos
@@ -116,7 +115,7 @@ class Basic < Test::Unit::TestCase
       assert_equal 1, info.page
       photo info[0]
     end
-    flickr.hydra.run
+    flickr.async.run
   end
 
   def test_photos_getExif
@@ -127,7 +126,7 @@ class Basic < Test::Unit::TestCase
       assert_equal "1600", info.exif.find {|f| f.tag == "ImageWidth"}.raw
       assert_equal "1200", info.exif.find {|f| f.tag == "ImageHeight"}.raw
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def test_photos_getSizes
@@ -135,14 +134,14 @@ class Basic < Test::Unit::TestCase
       assert_equal "http://www.flickr.com/photos/41650587@N02/3839885270/sizes/l/", info.find {|f| f.label == "Large"}.url
       assert_equal "http://farm3.static.flickr.com/2485/3839885270_6fb8b54e06_b.jpg", info.find {|f| f.label == "Large"}.source
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def test_photos_search
     flickr.photos.search(:user_id => "41650587@N02") do |info|
       photo info[0]
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   # photos.comments
@@ -156,7 +155,7 @@ class Basic < Test::Unit::TestCase
       assert_equal "http://www.flickr.com/photos/41650587@N02/3839885270/#comment72157621986549875", comments[0].permalink
       assert_equal "This is a cute cat !", comments[0].to_s
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   # tags
@@ -166,7 +165,7 @@ class Basic < Test::Unit::TestCase
       assert_equal "3839885270", tags.id
       assert_equal %w{cat pet}, tags.tags.map {|t| t.to_s}.sort
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def test_tags_getListUser
@@ -174,7 +173,7 @@ class Basic < Test::Unit::TestCase
       assert_equal "41650587@N02", tags.id
       assert_equal %w{cat pet}, tags.tags.sort
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   # urls
@@ -183,7 +182,7 @@ class Basic < Test::Unit::TestCase
       assert_equal "51035612836@N01", info.nsid
       assert_equal "http://www.flickr.com/groups/api/", info.url
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def test_urls_getUserPhotos
@@ -191,7 +190,7 @@ class Basic < Test::Unit::TestCase
       assert_equal "41650587@N02", info.nsid
       assert_equal "http://www.flickr.com/photos/41650587@N02/", info.url
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def test_urls_getUserProfile
@@ -199,7 +198,7 @@ class Basic < Test::Unit::TestCase
       assert_equal "41650587@N02", info.nsid
       assert_equal "http://www.flickr.com/people/41650587@N02/", info.url
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def test_urls_lookupGroup
@@ -207,7 +206,7 @@ class Basic < Test::Unit::TestCase
       assert_equal "51035612836@N01", info.id
       assert_equal "Flickr API", info.groupname
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
   def test_urls_lookupUser
@@ -215,7 +214,7 @@ class Basic < Test::Unit::TestCase
       assert_equal "41650587@N02", info.id
       assert_equal "ruby_flickraw", info.username
     end
-    flickr.hydra.run
+    flickr.async.run
   end
   
 end

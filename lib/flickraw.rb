@@ -154,8 +154,8 @@ module FlickRaw
       @token = token
     end
     
-    def hydra
-      @hydra ||= Typhoeus::Hydra.new
+    def async
+      @async ||= Typhoeus::Hydra.new
     end
     
     def process_response(req,http_response)
@@ -185,10 +185,10 @@ module FlickRaw
           res
         end
         if block_given?
-          hydra.queue request
+          async.queue request
         else
-          hydra.queue request
-          hydra.run
+          async.queue request
+          async.run
           request.handled_response
         end
       else
