@@ -180,9 +180,17 @@ module FlickRaw
           :headers => {'User-Agent' => "Flickraw/#{VERSION}"},
           :params => build_args(args, req))
         request.on_complete do |http_response|
-          yield(process_response(req,http_response))
+          res = process_response(req,http_response)
+          yield(res) if block_given?
+          res
         end
-        hydra.queue request
+        if block_given?
+          hydra.queue request
+        else
+          hydra.queue request
+          hydra.run
+          request.handled_response
+        end
       else
         http_response = open_flickr do |http|
           request = Net::HTTP::Post.new(REST_PATH, 'User-Agent' => "Flickraw/#{VERSION}")

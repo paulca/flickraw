@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+FlickRawOptions = {
+  'async' => true
+}
+
 require 'test/unit'
 require 'lib/flickraw'
 
