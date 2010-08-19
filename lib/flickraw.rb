@@ -124,10 +124,11 @@ module FlickRaw
         klass.build_request method_nesting.join('.')
       else
         req = method_nesting.first
-        define_method(req) { |*args|
-          class_req = self.class.request_name
-          @flickr.call class_req + '.' + req, *args
-        }
+        module_eval <<-EOS 
+                def #{req}(*args, &block)
+                  @flickr.call("#{request_name}.#{req}", *args, &block)
+                end
+              EOS
         flickr_methods << req
       end
     end
@@ -169,6 +170,7 @@ module FlickRaw
 
       res = Response.build json, type
       @token = res.token if res.respond_to? :flickr_type and res.flickr_type == "auth"
+      yield res if block_given?
       res
     end
 

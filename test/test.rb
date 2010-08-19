@@ -231,6 +231,16 @@ class Basic < Test::Unit::TestCase
     assert_equal "3829093290", list[0].id
   end
   
+  def test_favorites_getPublicList_with_block
+    run = false
+    flickr.favorites.getPublicList(:user_id => "41650587@N02") do |list|
+      run = true
+      assert_equal 1, list.size
+      assert_equal "3829093290", list[0].id
+    end
+    assert run
+  end
+  
   # groups
   def test_groups_getInfo
     info = flickr.groups.getInfo :group_id => "51035612836@N01"
