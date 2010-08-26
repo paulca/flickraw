@@ -111,7 +111,10 @@ You can pass some options to modify flickraw behavior:
     "proxy_password" => "proxy_password",
 
     "timeout" => 5,                # Set the request timeout
-    "auth_token" => "SAVED_TOKEN"  # Set the initial token
+    "auth_token" => "SAVED_TOKEN",  # Set the initial token
+    
+    "async" => true                 # Turn on async / concurrent fetching
+    "verbose" => true               # print server response to STDOUT
   }
 
   require 'flickraw'
@@ -166,8 +169,35 @@ instead of
 This way it it doesn't fetch available flickr methods each time it is loaded.
 The flickraw-cached gem is on rubyforge and should be up-to-date with regard to flickr api most of the time.
 
+
+== Async/concurrent downloading with Typhoeus
+
+Typhoeus (http://github.com/pauldix/typhoeus) is a gem that uses libcurl for very fast concurrent downloading. You can queue multiple requests and then run them in parallel.
+
+To use Typhoeus with flickraw, just use require `flickraw-typhoeus` rather than `flickraw` and pass a block to any of the supplied api methods. eg.
+
+    require 'flickraw-typhoeus'
+    
+    flickr.people.getPhotos(:user_id => '91752661@N00', :page => 1) do |photos|
+      puts photos
+    end
+
+    flickr.people.getPhotos(:user_id => '91752661@N00', :page => 2) do |photos|
+      puts photos
+    end
+    
+    flickr.people.getPhotos(:user_id => '91752661@N00', :page => 3) do |photos|
+      puts photos
+    end
+    
+    flickr.async.run
+
+This uses Typhoeus's queuing system. When you call `flickr.async.run`, all three requests are made in parallel, through libcurl : much faster than Net::HTTP.
+
+You can also use flickraw-typhoeus without queueing by just calling any of the regular flickraw methods without a block.
+
 = Notes
-If you want to use the api authenticated with several user at the same time, you must pass the authentication token explicitely each time.
+If you want to use the api authenticated with several user at the same time, you must pass the authentication token explicitly each time.
 This is because it is keeping the authentication token internally.
 As an alternative, you can create new Flickr objects besides Kernel.flickr which is created for you. Use Flickr.new to this effect.
 
